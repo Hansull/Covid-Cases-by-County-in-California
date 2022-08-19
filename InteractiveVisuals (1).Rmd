@@ -1,0 +1,45 @@
+---
+title: "Interactive Visualization"
+author: "Hansull Joh"
+date: "12/16/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Report
+I first read the dataset, then created variables that found the number of deaths, the pro-rated values for cases and deaths, and the cumulative number of deaths and cases. Next, I created a line plot that showed the cases for each county in California along with the other observations that I found, which I then converted the ggplot to plotly. Also, I used the highlight function to highlight a specific group of data, where, in this case, it is grouped by the name of the county, which can be set by the highlight_key function. Next, I used the given hidelines function to hide all the lines displayed on the plot found in the HideLines.js file. Then, I added a title and a button by writing some javascript code, converting it into html, and then combining the lines of code with the plotly. Lastly, I saved the plotly of the ggplot to a new file. The main problems I faced were learning the new syntax of all the different programming languages and figuring out how to add new content to the html file. I learned how to use plotly and its many functions such as highlighting a specific dataset and creating a button, as well as some Javascript.
+
+```{r, include=FALSE}
+cal = readRDS("ca.counties.covid.rds")
+```
+
+```{r, include=FALSE}
+library(plotly)
+library(ggplot2)
+library(dplyr)
+library(htmltools)
+library(htmlwidgets)
+cal1 = cal
+d = paste("Number of Deaths:", cal1$deaths)
+procases = paste("Pro-rated Values for Cases:", round(cal1$cases / cal1$population, 4))
+prodeaths = paste("Pro-rated Values for Deaths", round(cal1$deaths / cal1$population, 4))
+cc = paste("Cumulative Number of Cases:", cumsum(cal1$cases))
+cd = paste("Cumulative Number of Deaths:", cumsum(cal1$deaths))
+p = cal1 %>%
+  highlight_key(~name) %>%
+  ggplot(aes(y = cases, x = date, color = name, group = name)) + geom_line(aes(d = d, procases = procases, prodeaths = prodeaths, cc = cc, cd = cd))
+ply = ggplotly(p, tooltip = c("group", "x", "cases", "d", "procases","prodeaths", "cc", "cd")) %>%
+  highlight(on = "plotly_click")
+ply$sizingPolicy$browser$fill = FALSE
+h = HTML("<h2>California County Cases</h2>
+         This plot shows the COVID cases for each county in California by date.")
+button = HTML("<p>Click the button to toggle the lines.
+              <button onclick='hideLines()'>Hide Lines</button>")
+ply2 = prependContent(ply, h, button)
+htmlwidgets::saveWidget(ply2, "ca.counties.covid1.html", selfcontained = FALSE)
+```
+
+
